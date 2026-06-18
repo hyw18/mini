@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>MBTI 궁합 계산기</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <main class="card">
+        <h1>MBTI 궁합 계산기</h1>
+        <p class="sub">두 MBTI를 선택하고 예상 점수를 맞혀보세요!</p>
+
+        <form method="POST">
+            <input type="text" name="nickname" placeholder="닉네임" required>
+
+            <div class="row">
+                <select name="mbti1" required>
+                    {% for mbti in mbtis %}
+                    <option value="{{ mbti }}">{{ mbti }}</option>
+                    {% endfor %}
+                </select>
+
+                <select name="mbti2" required>
+                    {% for mbti in mbtis %}
+                    <option value="{{ mbti }}">{{ mbti }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <input type="number" name="expected_score" min="0" max="100" placeholder="예상 점수" required>
+
+            <button type="submit">궁합 보기</button>
+        </form>
+
+        {% if result %}
+        <section class="result">
+            <div class="emoji">{{ result.emoji }}</div>
+            <h2>{{ result.label }}</h2>
+            <p>{{ result.mbti1 }} × {{ result.mbti2 }}</p>
+            <strong>{{ result.score }}점</strong>
+            <p>{{ result.description }}</p>
+            <p>예상 점수: {{ result.expected }}점</p>
+            <p>차이: {{ result.difference }}점</p>
+        </section>
+        {% endif %}
+
+        <section class="ranking">
+            <h2>최근 참여자</h2>
+
+            {% if rankings %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>닉네임</th>
+                        <th>조합</th>
+                        <th>점수</th>
+                        <th>차이</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in rankings %}
+                    <tr>
+                        <td>{{ item.nickname }}</td>
+                        <td>{{ item.mbti }}</td>
+                        <td>{{ item.score }}</td>
+                        <td>{{ item.difference }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p class="empty">아직 참여자가 없어요.</p>
+            {% endif %}
+        </section>
+    </main>
+</body>
+</html>
