@@ -34,6 +34,23 @@ COMPAT = {
 #
 # 코드 입력
 
+'''
+def get_score(mbti1, mbti2):
+    if mbti1 == mbti2:
+        return 75
+    return COMPAT.get(mbti1, {}).get(mbti2, 50)
+
+
+def get_stage(score):
+    if score >= 90:
+        return "❤️", "운명 궁합", "서로의 장점이 잘 살아나는 조합이에요."
+    elif score >= 80:
+        return "😊", "찰떡 궁합", "성향 차이도 매력으로 느껴질 수 있어요."
+    elif score >= 70:
+        return "🙂", "좋은 궁합", "서로를 이해하면 오래 가기 좋은 조합이에요."
+    else:
+        return "😐", "무난한 궁합", "천천히 맞춰가면 괜찮은 조합이에요."'''
+
 
 @app.route("/", methods=["GET", "POST"])
 def index():
