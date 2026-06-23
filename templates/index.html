@@ -2,76 +2,59 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>MBTI 궁합 계산기</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <title>MBTI 궁합 테스트</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <main class="card">
-        <h1>MBTI 궁합 계산기</h1>
-        <p class="sub">두 MBTI를 선택하고 예상 점수를 맞혀보세요!</p>
 
-        <form method="POST">
-            <input type="text" name="nickname" placeholder="닉네임" required>
+    <h1>MBTI 궁합 테스트</h1>
 
-            <div class="row">
-                <select name="mbti1" required>
-                    {% for mbti in mbtis %}
-                    <option value="{{ mbti }}">{{ mbti }}</option>
-                    {% endfor %}
-                </select>
+    <form method="post">
+        <p>
+            내 MBTI:
+            <select name="my_mbti">
+                {% for mbti in mbti_list %}
+                <option value="{{ mbti }}">{{ mbti }}</option>
+                {% endfor %}
+            </select>
+        </p>
 
-                <select name="mbti2" required>
-                    {% for mbti in mbtis %}
-                    <option value="{{ mbti }}">{{ mbti }}</option>
-                    {% endfor %}
-                </select>
-            </div>
+        <p>
+            <label for="myGender">본인 성별</label>
+            <select id="myGender" name="myGender" required>
+                <option value="">선택하세요</option>
+                <option value="male">남성</option>
+                <option value="female">여성</option>
+            </select>
+        </p>
 
-            <input type="number" name="expected_score" min="0" max="100" placeholder="예상 점수" required>
+        <p>
+            <label for="partnerGender">상대 성별</label>
+            <select id="partnerGender" name="partnerGender">
+                <option value="none">없음</option>
+                <option value="male">남성</option>
+                <option value="female">여성</option>
+            </select>
+        </p>
 
-            <button type="submit">궁합 보기</button>
-        </form>
+        <button type="submit">결과 보기</button>
+    </form>
 
-        {% if result %}
-        <section class="result">
-            <div class="emoji">{{ result.emoji }}</div>
-            <h2>{{ result.label }}</h2>
-            <p>{{ result.mbti1 }} × {{ result.mbti2 }}</p>
-            <strong>{{ result.score }}점</strong>
-            <p>{{ result.description }}</p>
-            <p>예상 점수: {{ result.expected }}점</p>
-            <p>차이: {{ result.difference }}점</p>
-        </section>
-        {% endif %}
+    {% if error %}
+    <p class="error">{{ error }}</p>
+    {% endif %}
 
-        <section class="ranking">
-            <h2>최근 참여자</h2>
+    {% if result %}
+    <hr>
 
-            {% if rankings %}
-            <table>
-                <thead>
-                    <tr>
-                        <th>닉네임</th>
-                        <th>조합</th>
-                        <th>점수</th>
-                        <th>차이</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for item in rankings %}
-                    <tr>
-                        <td>{{ item.nickname }}</td>
-                        <td>{{ item.mbti }}</td>
-                        <td>{{ item.score }}</td>
-                        <td>{{ item.difference }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-            {% else %}
-            <p class="empty">아직 참여자가 없어요.</p>
-            {% endif %}
-        </section>
-    </main>
+    <h2>결과</h2>
+    <p>MBTI: {{ result.my_mbti }}</p>
+    <p>가장 잘 맞는 MBTI:
+        {% for mbti in result.best_matches %}
+            {{ mbti }}{% if not loop.last %}, {% endif %}
+        {% endfor %}
+    </p>
+    {% endif %}
+
 </body>
 </html>

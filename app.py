@@ -2,84 +2,192 @@ from flask import Flask, render_template, request
 
 app = Flask(__name__)
 
-MBTIS = [
-    "INTJ", "INTP", "ENTJ", "ENTP",
-    "INFJ", "INFP", "ENFJ", "ENFP",
-    "ISTJ", "ISFJ", "ESTJ", "ESFJ",
-    "ISTP", "ISFP", "ESTP", "ESFP"
+MBTI_LIST = [
+    "INFP", "ENFP", "INFJ", "ENFJ",
+    "INTJ", "ENTJ", "INTP", "ENTP",
+    "ISFP", "ESFP", "ISTP", "ESTP",
+    "ISFJ", "ESFJ", "ISTJ", "ESTJ"
 ]
 
+GENDER_WEIGHTS = {
+    "male-male": {
+        "compatibility": 0.40,
+        "duration": 0.24,
+        "recovery": 0.19,
+        "expression": 0.17,
+    },
+    "male-female": {
+        "compatibility": 0.40,
+        "duration": 0.23,
+        "recovery": 0.19,
+        "expression": 0.18,
+    },
+    "male-none": {
+        "compatibility": 0.40,
+        "duration": 0.24,
+        "recovery": 0.19,
+        "expression": 0.17,
+    },
+    "female-male": {
+        "compatibility": 0.40,
+        "duration": 0.22,
+        "recovery": 0.20,
+        "expression": 0.18,
+    },
+    "female-female": {
+        "compatibility": 0.40,
+        "duration": 0.21,
+        "recovery": 0.20,
+        "expression": 0.19,
+    },
+    "female-none": {
+        "compatibility": 0.40,
+        "duration": 0.22,
+        "recovery": 0.20,
+        "expression": 0.18,
+    },
+}
+
+GENDER_DESCRIPTIONS = {
+    "male-male": "선택한 관계 유형을 기준으로 연애 궁합을 분석했어요.",
+    "male-female": "선택한 관계 유형을 기준으로 연애 궁합을 분석했어요.",
+    "male-none": "상대 성별을 반영하지 않고 본인 기준으로 연애 궁합을 분석했어요.",
+    "female-male": "선택한 관계 유형을 기준으로 연애 궁합을 분석했어요.",
+    "female-female": "선택한 관계 유형을 기준으로 연애 궁합을 분석했어요.",
+    "female-none": "상대 성별을 반영하지 않고 본인 기준으로 연애 궁합을 분석했어요.",
+}
+
 COMPAT = {
-    "INFP": {"ENFJ": 95, "ENTJ": 90, "ESTJ": 60},
-    "ENFJ": {"INFP": 95, "ISFP": 85, "ISTP": 55},
-    "INTJ": {"ENFP": 92, "ENTP": 88, "ESFP": 55},
-    "ENFP": {"INTJ": 92, "INFJ": 90, "ISTJ": 60},
-    "ISTJ": {"ESFP": 80, "ESTJ": 75, "ENFP": 60},
-    "ESFP": {"ISTJ": 80, "ISFJ": 78, "INTJ": 55},
+    "INFP": {"ENFJ": 90, "ENTJ": 85, "INFJ": 80},
+    "ENFP": {"INFJ": 90, "INTJ": 85, "INFP": 80},
+    "INFJ": {"ENFP": 90, "ENTP": 85, "INFP": 80},
+    "ENFJ": {"INFP": 90, "ISFP": 85, "ENFP": 80},
+
+    "INTJ": {"ENFP": 85, "ENTP": 80, "INFJ": 75},
+    "ENTJ": {"INFP": 85, "INTP": 80, "ENFP": 75},
+    "INTP": {"ENTJ": 80, "ENFJ": 75, "INTJ": 70},
+    "ENTP": {"INFJ": 85, "INTJ": 80, "ENFP": 75},
+
+    "ISFP": {"ENFJ": 85, "ESFJ": 80, "INFP": 75},
+    "ESFP": {"ISFJ": 80, "ISTJ": 75, "ENFP": 70},
+    "ISTP": {"ESTJ": 80, "ESFJ": 75, "INTP": 70},
+    "ESTP": {"ISFJ": 80, "ISTJ": 75, "ENTP": 70},
+
+    "ISFJ": {"ESFP": 80, "ESTP": 80, "ISFP": 75},
+    "ESFJ": {"ISFP": 80, "ISTP": 75, "ENFJ": 70},
+    "ISTJ": {"ESFP": 75, "ESTP": 75, "ESTJ": 70},
+    "ESTJ": {"ISTP": 80, "ISTJ": 70, "ENTJ": 70},
 }
 
 
-# 아래에 두 개의 함수를 작성하세요.
-#
-# 1. 첫 번째 함수
-#    - 두 MBTI 값을 받아 궁합 점수를 반환합니다.
-#    - 두 MBTI가 같으면 정해진 기본 점수를 반환합니다.
-#    - COMPAT 점수표에 조합이 있으면 그 점수를 사용합니다.
-#    - 점수표에 없는 조합이면 무난한 기본 점수를 반환합니다.
-#
-# 2. 두 번째 함수
-#    - 점수를 받아 궁합 결과를 반환합니다.
-#    - 반환값은 이모지, 궁합 이름, 설명문 3개입니다.
-#    - 높은 점수일수록 더 좋은 궁합 결과가 나오도록 조건문을 사용합니다.
-#
-# 코드 입력
+# 코드작성 1
 
-'''
-def get_score(mbti1, mbti2):
-    if mbti1 == mbti2:
-        return 75
-    return COMPAT.get(mbti1, {}).get(mbti2, 50)
+def get_detail_scores(my_mbti):
+    mbti_scores = list(COMPAT.get(my_mbti, {}).values())
+
+    if not mbti_scores:
+        return {
+            "compatibility": 50,
+            "duration": 50,
+            "recovery": 50,
+            "expression": 50,
+        }
+
+    sorted_scores = sorted(mbti_scores)
+    middle_index = len(sorted_scores) // 2
+    return {
+        "compatibility": round(sum(mbti_scores) / len(mbti_scores)),
+        "duration": max(mbti_scores),
+        "recovery": min(mbti_scores),
+        "expression": sorted_scores[middle_index],
+    }
 
 
-def get_stage(score):
-    if score >= 90:
-        return "❤️", "운명 궁합", "서로의 장점이 잘 살아나는 조합이에요."
-    elif score >= 80:
-        return "😊", "찰떡 궁합", "성향 차이도 매력으로 느껴질 수 있어요."
-    elif score >= 70:
-        return "🙂", "좋은 궁합", "서로를 이해하면 오래 가기 좋은 조합이에요."
-    else:
-        return "😐", "무난한 궁합", "천천히 맞춰가면 괜찮은 조합이에요."'''
+def get_best_matches(my_mbti):
+    matches = COMPAT.get(my_mbti, {})
+    return [
+        mbti
+        for mbti, _ in sorted(matches.items(), key=lambda item: item[1], reverse=True)[:3]
+    ]
 
+
+def normalize_partner_gender(partner_gender):
+    if partner_gender not in ("male", "female", "none"):
+        return "none"
+    return partner_gender
+
+
+def calculate_final_score(scores, my_gender, partner_gender):
+    relation_key = f"{my_gender}-{partner_gender}"
+    weights = GENDER_WEIGHTS.get(relation_key)
+
+    if not weights:
+        raise ValueError("올바르지 않은 성별 선택값입니다.")
+
+    return round(
+        scores["compatibility"] * weights["compatibility"]
+        + scores["duration"] * weights["duration"]
+        + scores["recovery"] * weights["recovery"]
+        + scores["expression"] * weights["expression"]
+    )
+
+# 코드작성 2
 
 @app.route("/", methods=["GET", "POST"])
 def index():
     result = None
+    error = None
 
     if request.method == "POST":
-        mbti1 = request.form.get("mbti1")
-        mbti2 = request.form.get("mbti2")
-        expected_score = request.form.get("expected_score", "0")
+        my_mbti = request.form.get("my_mbti")
+        my_gender = request.form.get("myGender")
+        partner_gender = normalize_partner_gender(request.form.get("partnerGender", "none"))
 
-        score = get_score(mbti1, mbti2)
-        emoji, label, description = get_stage(score)
+        if my_gender not in ("male", "female"):
+            error = "본인 성별을 선택해주세요."
+        else:
+            scores = get_detail_scores(my_mbti)
+            score = calculate_final_score(scores, my_gender, partner_gender)
+            stage = get_stage(score)
+            description = GENDER_DESCRIPTIONS[f"{my_gender}-{partner_gender}"]
 
-        expected = float(expected_score)
-        difference = abs(score - expected)
+            result = {
+                "my_mbti": my_mbti,
+                "my_gender": my_gender,
+                "partner_gender": partner_gender,
+                "score": score,
+                "best_matches": get_best_matches(my_mbti),
+                "stage": stage,
+                "description": description,
+            }
 
-        result = {
-            "mbti1": mbti1,
-            "mbti2": mbti2,
-            "score": score,
-            "expected": expected,
-            "difference": difference,
-            "emoji": emoji,
-            "label": label,
-            "description": description,
-        }
-
-    return render_template("index.html", mbtis=MBTIS, result=result)
+    return render_template(
+        "index.html",
+        mbti_list=MBTI_LIST,
+        error=error,
+        result=result
+    )
 
 
 if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0", port=1234)
+    app.run(debug=True, port=1234)
+
+'''
+def get_score(my_mbti):
+    scores = COMPAT.get(my_mbti, {}).values()
+    if not scores:
+        return 50
+    return round(sum(scores) / len(scores))
+
+def get_stage(score):
+    if score >= 90:
+        return "운명 궁합"
+    elif score >= 80:
+        return "좋은 궁합"
+    elif score >= 70:
+        return "무난한 궁합"
+    elif score >= 60:
+        return "노력형 궁합"
+    else:
+        return "조심할 궁합"
+'''
